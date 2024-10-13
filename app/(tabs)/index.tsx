@@ -1,10 +1,11 @@
-import { Image, StyleSheet } from "react-native";
+import { Button, Image, StyleSheet, TextInput } from "react-native";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useState, useEffect } from "react";
 import Slider from "@react-native-community/slider";
 import { Colors } from "@/constants/Colors";
+import * as FileSystem from "expo-file-system";
 
 export default function HomeScreen() {
   const [blueRGB, setBlueRGB] = useState(0);
@@ -14,9 +15,52 @@ export default function HomeScreen() {
   const [color, setColor] = useState("rgb(0,0,0)");
   const MAX_VALUE = 255; // Max value for RGB
 
-  const closeSlider = () => {
-    console.log("Slider closed");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const submitProject = () => {
+    const data = {
+      name,
+      email,
+      password,
+      confirmPassword,
+      phoneNumber,
+      color,
+      blueRGB,
+      greenRGB,
+      redRGB,
+    };
+    downloadJsonFile(data, "result.json");
+
+    alert("Form Submitted and data.json file is ready for download!");
   };
+
+  function downloadJsonFile(
+    data: {
+      name: string;
+      email: string;
+      password: string;
+      confirmPassword: string;
+      phoneNumber: string;
+      color: string;
+    },
+    filename = "data.json"
+  ) {
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
 
   useEffect(() => {
     setColor(`rgb(${redRGB},${greenRGB},${blueRGB})`);
@@ -61,6 +105,83 @@ export default function HomeScreen() {
         </ThemedText>
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
+        <TextInput
+          placeholder="Name"
+          style={{
+            height: 40,
+            borderColor: "gray",
+            borderWidth: 1,
+            width: 200,
+            color: "black",
+            backgroundColor: "white",
+            borderRadius: 5,
+          }}
+          onChangeText={(text) => setName(text)}
+          value={name}
+        />
+
+        <TextInput
+          placeholder="Email"
+          style={{
+            height: 40,
+            borderColor: "gray",
+            borderWidth: 1,
+            width: 200,
+            color: "black",
+            backgroundColor: "white",
+            borderRadius: 5,
+          }}
+          onChangeText={(text) => setEmail(text)}
+          value={email}
+        />
+
+        <TextInput
+          placeholder="Password"
+          style={{
+            height: 40,
+            borderColor: "gray",
+            borderWidth: 1,
+            width: 200,
+            color: "black",
+            backgroundColor: "white",
+            borderRadius: 5,
+          }}
+          onChangeText={(text) => setPassword(text)}
+          value={password}
+        />
+
+        <TextInput
+          placeholder="Confirm Password"
+          style={{
+            height: 40,
+            borderColor: "gray",
+            borderWidth: 1,
+            width: 200,
+            color: "black",
+            backgroundColor: "white",
+            borderRadius: 5,
+          }}
+          onChangeText={(text) => setConfirmPassword(text)}
+          value={confirmPassword}
+        />
+
+        <TextInput
+          placeholder="Phone Number"
+          style={{
+            height: 40,
+            borderColor: "gray",
+            borderWidth: 1,
+            width: 200,
+            color: "black",
+            backgroundColor: "white",
+            borderRadius: 5,
+          }}
+          keyboardType="numeric"
+          onChangeText={(text) => setPhoneNumber(text)}
+          value={phoneNumber}
+          maxLength={10} //setting limit of input
+        />
+
         <ThemedText>
           {" "}
           Red: {redRGB}/{MAX_VALUE}{" "}
@@ -72,7 +193,6 @@ export default function HomeScreen() {
           step={1}
           minimumTrackTintColor={Colors.dark.text}
           maximumTrackTintColor={Colors.dark.text}
-          onSlidingComplete={closeSlider}
           onValueChange={(value) => setRedRGB(value)}
         />
 
@@ -87,7 +207,6 @@ export default function HomeScreen() {
           step={1}
           minimumTrackTintColor={Colors.dark.text}
           maximumTrackTintColor={Colors.dark.text}
-          onSlidingComplete={closeSlider}
           onValueChange={(value) => setBlueRGB(value)}
         />
 
@@ -102,8 +221,14 @@ export default function HomeScreen() {
           step={1}
           minimumTrackTintColor={Colors.dark.text}
           maximumTrackTintColor={Colors.dark.text}
-          onSlidingComplete={closeSlider}
           onValueChange={(value) => setGreenRGB(value)}
+        />
+
+        <Button
+          title="Submit"
+          onPress={() => {
+            submitProject();
+          }}
         />
       </ThemedView>
     </ParallaxScrollView>
