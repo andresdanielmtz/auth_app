@@ -1,26 +1,33 @@
-import { Button, Image, StyleSheet, TextInput } from "react-native";
-import ParallaxScrollView from "@/components/ParallaxScrollView";
+import {
+  Button,
+  StyleSheet,
+  TextInput,
+  Alert,
+  View,
+  Platform,
+} from "react-native";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useState, useEffect } from "react";
 import Slider from "@react-native-community/slider";
 import { Colors } from "@/constants/Colors";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 
 export default function HomeScreen() {
-  const [blueRGB, setBlueRGB] = useState(0);
-  const [greenRGB, setGreenRGB] = useState(0);
-  const [redRGB, setRedRGB] = useState(0);
-
-  const [color, setColor] = useState("rgb(0,0,0)");
   const MAX_VALUE = 255; // Max value for RGB
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const submitProject = () => {
+  const [color, setColor] = useState("#000");
+  const [redRGB, setRedRGB] = useState(0);
+  const [greenRGB, setGreenRGB] = useState(0);
+  const [blueRGB, setBlueRGB] = useState(0);
+  const [textColor, setTextColor] = useState("black");
+
+  const submitProject = async () => {
     const data = {
       name,
       email,
@@ -28,232 +35,235 @@ export default function HomeScreen() {
       confirmPassword,
       phoneNumber,
       color,
-      blueRGB,
-      greenRGB,
       redRGB,
+      greenRGB,
+      blueRGB,
+      textColor,
     };
-    downloadJsonFile(data, "result.json");
-
-    alert("Form Submitted and data.json file is ready for download!");
+    try {
+      await AsyncStorage.setItem("formData", JSON.stringify(data));
+      Alert.alert("Data saved successfully");
+      if (Platform.OS === "web") {
+        console.log("Data saved successfully:", data);
+        alert("Data saved successfully");
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
+      if (Platform.OS === "web") {
+        console.error("Error saving data:", error);
+        alert("Error saving data");
+      }
+    }
   };
 
-  function downloadJsonFile(
-    data: {
-      name: string;
-      email: string;
-      password: string;
-      confirmPassword: string;
-      phoneNumber: string;
-      color: string;
-    },
-    filename = "data.json"
-  ) {
+  const downloadJSON = async () => {
+    const data = {
+      name,
+      email,
+      password,
+      confirmPassword,
+      phoneNumber,
+      color,
+      redRGB,
+      greenRGB,
+      blueRGB,
+      textColor,
+    };
     const jsonString = JSON.stringify(data, null, 2);
-    const blob = new Blob([jsonString], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
 
-    document.body.appendChild(link);
-    link.click();
+    if (Platform.OS === "web") {
+      const blob = new Blob([jsonString], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "formData.json";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      alert("Download Successful");
+    } else {
+      const fileUri = `${FileSystem.documentDirectory}/formData.json`;
+      try {
+        await FileSystem.writeAsStringAsync(fileUri, jsonString, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+        Alert.alert("Download Successful", `File saved to ${fileUri}`);
+      } catch (error) {
+        console.error("Error saving file:", error);
+        Alert.alert("Error", "Failed to download file");
+      }
+    }
+  };
 
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }
+  useEffect(() => {
+    const loadPersistedData = async () => {
+      try {
+        const savedData = await AsyncStorage.getItem("formData");
+        if (savedData) {
+          const {
+            name,
+            email,
+            password,
+            confirmPassword,
+            phoneNumber,
+            color,
+            redRGB,
+            greenRGB,
+            blueRGB,
+            textColor,
+          } = JSON.parse(savedData);
+
+          setName(name);
+          setEmail(email);
+          setPassword(password);
+          setConfirmPassword(confirmPassword);
+          setPhoneNumber(phoneNumber);
+          setColor(color);
+          setRedRGB(redRGB);
+          setGreenRGB(greenRGB);
+          setBlueRGB(blueRGB);
+          setTextColor(textColor);
+        }
+      } catch (error) {
+        console.error("Error loading persisted data:", error);
+      }
+    };
+
+    loadPersistedData();
+  }, []);
 
   useEffect(() => {
     setColor(`rgb(${redRGB},${greenRGB},${blueRGB})`);
-    document.body.style.backgroundColor = color;
-    Colors.light.background = color;
-    Colors.dark.background = color;
+    const brightness = (redRGB * 299 + greenRGB * 587 + blueRGB * 114) / 1000;
 
-    {
-      /**
-      https://stackoverflow.com/questions/596216/formula-to-determine-perceived-brightness-of-rgb-color
-      */
-    }
-    const brightness = 0.299 * redRGB + 0.587 * greenRGB + 0.114 * blueRGB;
-
-    if (brightness >= 128) {
-      document.body.style.color = "black";
-      Colors.light.text = "black";
+    if (brightness > 125) {
+      setTextColor("black");
       Colors.dark.text = "black";
     } else {
-      document.body.style.color = "white";
-      Colors.light.text = "white";
+      setTextColor("white");
       Colors.dark.text = "white";
     }
-  }, [blueRGB, greenRGB, redRGB]);
+  }, [redRGB, greenRGB, blueRGB]);
+
+  const styles = StyleSheet.create({
+    titleContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    stepContainer: {
+      gap: 8,
+      marginBottom: 8,
+      backgroundColor: color,
+    },
+    mainBackground: {
+      backgroundColor: color,
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    input: {
+      height: 40,
+      borderColor: "gray",
+      borderWidth: 1,
+      marginBottom: 10,
+      paddingHorizontal: 10,
+      backgroundColor: "white",
+      color: "black",
+    },
+    text: {
+      color: textColor,
+    },
+    slider: {
+      width: 200,
+      height: 40,
+    },
+  });
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-      headerImage={
-        <Image
-          source={require("@/assets/images/partial-react-logo.png")}
-          style={styles.reactLogo}
-        />
-      }
-    >
-      <ThemedView style={styles.titleContainer}>
+    <ThemedView style={styles.mainBackground}>
+      <View style={styles.titleContainer}>
         <ThemedText type="title">Welcome!</ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
+      </View>
+      <View style={styles.stepContainer}>
         <ThemedText type="subtitle">
           Please fill the form below to get started.
         </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
+        <ThemedText>Name: </ThemedText>
         <TextInput
           placeholder="Name"
-          style={{
-            height: 40,
-            borderColor: "gray",
-            borderWidth: 1,
-            width: 200,
-            color: "black",
-            backgroundColor: "white",
-            borderRadius: 5,
-          }}
-          onChangeText={(text) => setName(text)}
+          style={styles.input}
+          onChangeText={setName}
           value={name}
         />
-
+        <ThemedText>Email: </ThemedText>
         <TextInput
           placeholder="Email"
-          style={{
-            height: 40,
-            borderColor: "gray",
-            borderWidth: 1,
-            width: 200,
-            color: "black",
-            backgroundColor: "white",
-            borderRadius: 5,
-          }}
-          onChangeText={(text) => setEmail(text)}
+          style={styles.input}
+          onChangeText={setEmail}
           value={email}
         />
-
+        <ThemedText>Password: </ThemedText>
         <TextInput
           placeholder="Password"
-          style={{
-            height: 40,
-            borderColor: "gray",
-            borderWidth: 1,
-            width: 200,
-            color: "black",
-            backgroundColor: "white",
-            borderRadius: 5,
-          }}
-          onChangeText={(text) => setPassword(text)}
+          style={styles.input}
+          secureTextEntry
+          onChangeText={setPassword}
           value={password}
         />
-
+        <ThemedText>Confirm Password: </ThemedText>
         <TextInput
           placeholder="Confirm Password"
-          style={{
-            height: 40,
-            borderColor: "gray",
-            borderWidth: 1,
-            width: 200,
-            color: "black",
-            backgroundColor: "white",
-            borderRadius: 5,
-          }}
-          onChangeText={(text) => setConfirmPassword(text)}
+          style={styles.input}
+          secureTextEntry
+          onChangeText={setConfirmPassword}
           value={confirmPassword}
         />
-
+        <ThemedText>Phone Number: </ThemedText>
         <TextInput
           placeholder="Phone Number"
-          style={{
-            height: 40,
-            borderColor: "gray",
-            borderWidth: 1,
-            width: 200,
-            color: "black",
-            backgroundColor: "white",
-            borderRadius: 5,
-          }}
+          style={styles.input}
           keyboardType="numeric"
-          onChangeText={(text) => setPhoneNumber(text)}
+          onChangeText={setPhoneNumber}
           value={phoneNumber}
-          maxLength={10} //setting limit of input
+          maxLength={10}
         />
 
-        <ThemedText>
-          {" "}
-          Red: {redRGB}/{MAX_VALUE}{" "}
-        </ThemedText>
+        <ThemedText type="subtitle">Colors</ThemedText>
         <Slider
-          style={{ width: 200, height: 40 }}
+          style={styles.slider}
           minimumValue={0}
           maximumValue={MAX_VALUE}
           step={1}
-          minimumTrackTintColor={Colors.dark.text}
+          minimumTrackTintColor="red"
           maximumTrackTintColor={Colors.dark.text}
-          onValueChange={(value) => setRedRGB(value)}
+          onValueChange={setRedRGB}
+          value={redRGB}
         />
-
-        <ThemedText>
-          {" "}
-          Blue: {blueRGB}/{MAX_VALUE}
-        </ThemedText>
         <Slider
-          style={{ width: 200, height: 40 }}
+          style={styles.slider}
           minimumValue={0}
           maximumValue={MAX_VALUE}
           step={1}
-          minimumTrackTintColor={Colors.dark.text}
+          minimumTrackTintColor="green"
           maximumTrackTintColor={Colors.dark.text}
-          onValueChange={(value) => setBlueRGB(value)}
+          onValueChange={setGreenRGB}
+          value={greenRGB}
         />
-
-        <ThemedText>
-          {" "}
-          Green: {greenRGB}/{MAX_VALUE}{" "}
-        </ThemedText>
         <Slider
-          style={{ width: 200, height: 40 }}
+          style={styles.slider}
           minimumValue={0}
           maximumValue={MAX_VALUE}
           step={1}
-          minimumTrackTintColor={Colors.dark.text}
+          minimumTrackTintColor="blue"
           maximumTrackTintColor={Colors.dark.text}
-          onValueChange={(value) => setGreenRGB(value)}
+          onValueChange={setBlueRGB}
+          value={blueRGB}
         />
-
-        <Button
-          title="Submit"
-          onPress={() => {
-            submitProject();
-          }}
-        />
-      </ThemedView>
-    </ParallaxScrollView>
+        <Button title="Submit" onPress={submitProject} />
+        <Button title="Download JSON" onPress={downloadJSON} />
+      </View>
+    </ThemedView>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: "absolute",
-  },
-  mainBackground: {
-    backgroundColor: "rgb(0,0,0)",
-    flex: 1,
-  },
-});
