@@ -12,13 +12,13 @@ export default function Credits() {
     },
     personalInfo: {
       paddingTop: 20,
-      backgroundColor: "white", 
+      backgroundColor: "white",
       textAlign: "center",
     },
-    personalData: { 
+    personalData: {
       fontStyle: "italic",
       paddingBottom: 10,
-    }
+    },
   });
   return (
     <ThemedView style={styles.container}>
@@ -26,7 +26,10 @@ export default function Credits() {
       <ThemedText type="subtitle"> Prof. Arturo Javier Lopez Fausto</ThemedText>
 
       <ThemedView style={styles.personalInfo}>
-        <ThemedText style = {styles.personalData}> Andrés Daniel Martínez - A00227463 </ThemedText>
+        <ThemedText style={styles.personalData}>
+          {" "}
+          Andrés Daniel Martínez - A00227463{" "}
+        </ThemedText>
         <ThemedText>
           {" "}
           Integración de Seguridad Informática en Redes y Sistemas de Software{" "}

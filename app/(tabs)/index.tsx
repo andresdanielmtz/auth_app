@@ -88,10 +88,13 @@ export default function HomeScreen() {
         await FileSystem.writeAsStringAsync(fileUri, jsonString, {
           encoding: FileSystem.EncodingType.UTF8,
         });
-        Alert.alert("Download Successful", `File saved to ${fileUri}`);
+        Alert.alert(
+          "Descarga exitosa",
+          `El archivo fue guardado en ${fileUri}`
+        );
       } catch (error) {
         console.error("Error saving file:", error);
-        Alert.alert("Error", "Failed to download file");
+        Alert.alert("Error", "Falla en guardar el archivo");
       }
     }
   };
@@ -184,27 +187,27 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.mainBackground}>
       <View style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
+        <ThemedText type="title">¡Bienvenido!</ThemedText>
       </View>
       <View style={styles.stepContainer}>
         <ThemedText type="subtitle">
-          Please fill the form below to get started.
+          Por favor rellena los recuadros debajo para continuar.
         </ThemedText>
-        <ThemedText>Name: </ThemedText>
+        <ThemedText>Nombre: </ThemedText>
         <TextInput
           placeholder="Name"
           style={styles.input}
           onChangeText={setName}
           value={name}
         />
-        <ThemedText>Email: </ThemedText>
+        <ThemedText>Correo Electrónico: </ThemedText>
         <TextInput
           placeholder="Email"
           style={styles.input}
           onChangeText={setEmail}
           value={email}
         />
-        <ThemedText>Password: </ThemedText>
+        <ThemedText>Contraseña: </ThemedText>
         <TextInput
           placeholder="Password"
           style={styles.input}
@@ -212,7 +215,7 @@ export default function HomeScreen() {
           onChangeText={setPassword}
           value={password}
         />
-        <ThemedText>Confirm Password: </ThemedText>
+        <ThemedText>Confirmar Contraseña: </ThemedText>
         <TextInput
           placeholder="Confirm Password"
           style={styles.input}
@@ -220,7 +223,7 @@ export default function HomeScreen() {
           onChangeText={setConfirmPassword}
           value={confirmPassword}
         />
-        <ThemedText>Phone Number: </ThemedText>
+        <ThemedText>Número Telefónico: </ThemedText>
         <TextInput
           placeholder="Phone Number"
           style={styles.input}
@@ -230,7 +233,7 @@ export default function HomeScreen() {
           maxLength={10}
         />
 
-        <ThemedText type="subtitle">Colors</ThemedText>
+        <ThemedText type="subtitle">Colores</ThemedText>
         <Slider
           style={styles.slider}
           minimumValue={0}
@@ -261,8 +264,8 @@ export default function HomeScreen() {
           onValueChange={setBlueRGB}
           value={blueRGB}
         />
-        <Button title="Submit" onPress={submitProject} />
-        <Button title="Download JSON" onPress={downloadJSON} />
+        <Button title="Guardar" onPress={submitProject} />
+        <Button title="Descargar Información" onPress={downloadJSON} />
       </View>
     </ThemedView>
   );
